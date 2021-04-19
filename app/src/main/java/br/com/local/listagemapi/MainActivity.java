@@ -40,23 +40,26 @@ public class MainActivity extends AppCompatActivity {
         recyclerApi = findViewById(R.id.recyclerApi);
         buttonParse = findViewById(R.id.buttonParse);
 
+        queue = Volley.newRequestQueue(getApplicationContext());
+
+
+        heroi = new ArrayList<>();
+
 
         buttonParse.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                queue = Volley.newRequestQueue(getApplicationContext());
-
                 RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
                 recyclerApi.setLayoutManager(layoutManager);
                 recyclerApi.setHasFixedSize(true);
 
-                heroi = new ArrayList<>();
-
+                adapter = new RecyclerAdapter(MainActivity.this, heroi );
+                recyclerApi.setAdapter(adapter);
 
                 //listaHeroi();
 
-                jsonParse();
+                parse();
 
                 // buttonParse.setVisibility(View.GONE);
 
@@ -64,38 +67,39 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void jsonParse() {
-
+    public void parse(){
         String url = "http://192.168.15.28/HeroApi/v1/Api.php?apicall=getheroes";
 
-        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null,
-                new Response.Listener<JSONArray>() {
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+                new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(JSONArray response) {
-                        for (int i = 0; i < response.length(); i++) {
+                    public void onResponse(JSONObject response) {
+                        try {
 
-                            Hero hero = new Hero();
+                            JSONArray jsonArray = response.getJSONArray("heroes");
+                            for (int i = 0; i < jsonArray.length(); i++) {
+                                JSONObject object = jsonArray.getJSONObject(i);
 
-                            try {
+                                int id = object.getInt("id");
+                                String name = object.getString("name");
+                                String realname = object.getString("realname");
+                                int rating = object.getInt("rating");
+                                String editora = object.getString("editora");
 
+                                Hero hero = new Hero();
 
-                                JSONObject heroe = response.getJSONObject(i);
+                                hero.setNome(realname);
+                                hero.setHeroi(name);
+                                hero.setRating(rating);
+                                hero.setEditora(editora);
 
-
-                                hero.setHeroi(heroe.getString("name"));
-                                hero.setNome(heroe.getString("realname"));
-                                hero.setRating(heroe.getInt("rating"));
-                                hero.setEditora(heroe.getString("editora"));
-
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                                heroi.add( hero );
                             }
-                            heroi.add(hero);
-                        }
 
-                        adapter = new RecyclerAdapter(MainActivity.this, heroi );
-                        recyclerApi.setAdapter(adapter);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -103,8 +107,8 @@ public class MainActivity extends AppCompatActivity {
                 error.printStackTrace();
             }
         });
-        queue.add(request);
 
+        queue.add(request);
 
     }
 
@@ -113,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-/*
+    // Teste RecyclerView
     public void listaHeroi() {
 
         Hero hero = new Hero("Batman", "Bruce Wayne", 5, "DC");
@@ -128,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
- */
 
 
 }
